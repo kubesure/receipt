@@ -19,12 +19,13 @@ var mongoreceiptsvc = os.Getenv("mongoreceiptsvc")
 //Payment as a API input
 type Payment struct {
 	Amount      int    `json:"amount"`
-	PaymentMode string `json:"paymentmode"`
+	PaymentMode string `json:"paymentMode"`
+	QuoteNumber int64  `json:"quoteNumber"`
 }
 
 //Receipt is response of API
 type Receipt struct {
-	ReceiptNumber int `json:"receiptnumber"`
+	ReceiptNumber int `json:"receiptNumber"`
 }
 
 func main() {
@@ -36,7 +37,6 @@ func main() {
 
 func receipt(w http.ResponseWriter, req *http.Request) {
 	body, _ := ioutil.ReadAll(req.Body)
-	/*TODO error handling best prac to be implemted*/
 	p, merr := marshallProposal(string(body))
 	r, serr := save(p)
 	if merr != nil {
@@ -56,10 +56,8 @@ func marshallProposal(data string) (*Payment, error) {
 	var p Payment
 	err := json.Unmarshal([]byte(data), &p)
 	if err != nil {
-		log.Println("error in unmarshalling payment", err)
 		return nil, err
 	}
-	log.Println("return p", p)
 	return &p, nil
 }
 
@@ -78,11 +76,13 @@ func save(p *Payment) (*Receipt, error) {
 	if errSeq != nil {
 		return nil, errSeq
 	}
-	_, errcol := collection.InsertOne(context.Background(), bson.M{
-		"receiptNumber": id, "amount": p.Amount, "paymentmode": p.PaymentMode})
+
+	_, errcol := collection.InsertOne(context.Background(), bson.D{
+		{"receiptNumber", id}, {"quoteNumber", p.QuoteNumber}, {"amount", p.Amount},
+		{"paymentmode", p.PaymentMode}, {"createdDate", time.Now().String()},
+	})
 
 	if errcol != nil {
-		log.Println("errcol")
 		return nil, errcol
 	}
 
