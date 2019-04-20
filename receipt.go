@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 )
 
@@ -18,9 +19,10 @@ var mongoreceiptsvc = os.Getenv("mongoreceiptsvc")
 
 //Payment as a API input
 type Payment struct {
-	Amount      int    `json:"amount"`
-	PaymentMode string `json:"paymentMode"`
-	QuoteNumber int64  `json:"quoteNumber"`
+	Amount           int    `json:"amount"`
+	PaymentMode      string `json:"paymentMode"`
+	QuoteNumber      int64  `json:"quoteNumber"`
+	paymentReference string `json:"refrenceNumber"`
 }
 
 //Receipt is response of API
@@ -32,7 +34,24 @@ func main() {
 	log.Println("server receipt starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/receipts", receipt)
-	log.Fatal(http.ListenAndServe(":8000", mux))
+	srv := http.Server{Addr: ":8080", Handler: mux}
+	ctx := context.Background()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for range c {
+			log.Print("shutting down receipt server...")
+			srv.Shutdown(ctx)
+			<-ctx.Done()
+		}
+	}()
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("ListenAndServe(): %s", err)
+	}
+
+	//log.Fatal(srv.ListenAndServe(":8000", mux))
 }
 
 func receipt(w http.ResponseWriter, req *http.Request) {
@@ -79,7 +98,8 @@ func save(p *Payment) (*Receipt, error) {
 
 	_, errcol := collection.InsertOne(context.Background(), bson.D{
 		{"receiptNumber", id}, {"quoteNumber", p.QuoteNumber}, {"amount", p.Amount},
-		{"paymentmode", p.PaymentMode}, {"createdDate", time.Now().String()},
+		{"paymentMode", p.PaymentMode}, {"paymentReference", p.paymentReference},
+		{"createdDate", time.Now().String()},
 	})
 
 	if errcol != nil {
