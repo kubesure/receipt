@@ -22,7 +22,7 @@ type Payment struct {
 	Amount           int    `json:"amount"`
 	PaymentMode      string `json:"paymentMode"`
 	QuoteNumber      int64  `json:"quoteNumber"`
-	paymentReference string `json:"refrenceNumber"`
+	paymentReference string `json:"paymentRefrence"`
 }
 
 //Receipt is response of API
@@ -34,7 +34,7 @@ func main() {
 	log.Println("server receipt starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/receipts", receipt)
-	srv := http.Server{Addr: ":8080", Handler: mux}
+	srv := http.Server{Addr: ":8000", Handler: mux}
 	ctx := context.Background()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -55,6 +55,11 @@ func main() {
 }
 
 func receipt(w http.ResponseWriter, req *http.Request) {
+
+	if err := validateReq(w, req); err != nil {
+		return
+	}
+
 	body, _ := ioutil.ReadAll(req.Body)
 	p, merr := marshallProposal(string(body))
 	r, serr := save(p)
@@ -71,12 +76,28 @@ func receipt(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func validateReq(w http.ResponseWriter, req *http.Request) error {
+	if req.Method != http.MethodPost {
+		log.Println("invalid method ", req.Method)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return fmt.Errorf("Invalid method %s", req.Method)
+	}
+
+	if req.Header.Get("Content-Type") != "application/json" {
+		log.Println("invalid content type ", req.Header.Get("Content-Type"))
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("Invalid content-type require %s", "application/json")
+	}
+	return nil
+}
+
 func marshallProposal(data string) (*Payment, error) {
 	var p Payment
 	err := json.Unmarshal([]byte(data), &p)
 	if err != nil {
 		return nil, err
 	}
+	log.Println(p)
 	return &p, nil
 }
 
