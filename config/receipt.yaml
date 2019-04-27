@@ -27,4 +27,4 @@ spec:
         image: receipt:v1
         name: receipt
         ports:
-        - containerPort: 8030
+        - containerPort: 8000
