@@ -22,7 +22,7 @@ type Payment struct {
 	Amount           int    `json:"amount"`
 	PaymentMode      string `json:"paymentMode"`
 	QuoteNumber      int64  `json:"quoteNumber"`
-	paymentReference string `json:"paymentRefrence"`
+	PaymentReference string `json:"paymentRefrence"`
 }
 
 //Receipt is response of API
@@ -119,7 +119,7 @@ func save(p *Payment) (*Receipt, error) {
 
 	_, errcol := collection.InsertOne(context.Background(), bson.D{
 		{"receiptNumber", id}, {"quoteNumber", p.QuoteNumber}, {"amount", p.Amount},
-		{"paymentMode", p.PaymentMode}, {"paymentReference", p.paymentReference},
+		{"paymentMode", p.PaymentMode}, {"paymentReference", p.PaymentReference},
 		{"createdDate", time.Now().String()},
 	})
 
