@@ -25,12 +25,12 @@ Mongodb v4, Golang
 
 ```
 curl -i -X POST \
-  172.17.0.2:8000/api/v1/receipts \
+  http://localhost:8000/api/v1/receipts \
   -H 'Content-Type: application/json' \
-  -d '{ \             
-    "Amount": 12345, \ 
-    "PaymentMode": "1212121", \
-    "quoteNumber": 11, \
-    "paymentRefrence": "1212121" \
-} \'
+  -d '{              
+    "Amount": 12345,  
+    "PaymentMode": "1212121", 
+    "quoteNumber": 11, 
+    "paymentRefrence": "1212121" 
+}'
 ```
