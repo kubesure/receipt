@@ -4,18 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var mongoreceiptsvc = os.Getenv("mongoreceiptsvc")
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(true)
+}
 
 //Payment as a API input
 type Payment struct {
@@ -31,7 +39,7 @@ type Receipt struct {
 }
 
 func main() {
-	log.Println("server receipt starting...")
+	log.Debug("server receipt starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/receipts", receipt)
 	srv := http.Server{Addr: ":8000", Handler: mux}
@@ -41,7 +49,7 @@ func main() {
 
 	go func() {
 		for range c {
-			log.Print("shutting down receipt server...")
+			log.Debug("shutting down receipt server...")
 			srv.Shutdown(ctx)
 			<-ctx.Done()
 		}
@@ -50,8 +58,6 @@ func main() {
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("ListenAndServe(): %s", err)
 	}
-
-	//log.Fatal(srv.ListenAndServe(":8000", mux))
 }
 
 func receipt(w http.ResponseWriter, req *http.Request) {
@@ -64,10 +70,10 @@ func receipt(w http.ResponseWriter, req *http.Request) {
 	p, merr := marshallProposal(string(body))
 	r, serr := save(p)
 	if merr != nil {
-		log.Println(merr)
+		log.Error(merr)
 		w.WriteHeader(http.StatusServiceUnavailable)
 	} else if serr != nil {
-		log.Println(serr)
+		log.Error(serr)
 		w.WriteHeader(http.StatusServiceUnavailable)
 	} else {
 		data, _ := json.Marshal(r)
@@ -78,13 +84,13 @@ func receipt(w http.ResponseWriter, req *http.Request) {
 
 func validateReq(w http.ResponseWriter, req *http.Request) error {
 	if req.Method != http.MethodPost {
-		log.Println("invalid method ", req.Method)
+		log.Error("invalid method ", req.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return fmt.Errorf("Invalid method %s", req.Method)
 	}
 
 	if req.Header.Get("Content-Type") != "application/json" {
-		log.Println("invalid content type ", req.Header.Get("Content-Type"))
+		log.Error("invalid content type ", req.Header.Get("Content-Type"))
 		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("Invalid content-type require %s", "application/json")
 	}
@@ -97,7 +103,6 @@ func marshallProposal(data string) (*Payment, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println(p)
 	return &p, nil
 }
 
