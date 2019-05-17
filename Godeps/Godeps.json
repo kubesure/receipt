@@ -14,6 +14,16 @@
 			"Rev": "2a8bb927dd31d8daada140a5d09578521ce5c36a"
 		},
 		{
+			"ImportPath": "github.com/konsorten/go-windows-terminal-sequences",
+			"Comment": "v1.0.2",
+			"Rev": "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+		},
+		{
+			"ImportPath": "github.com/sirupsen/logrus",
+			"Comment": "v1.4.1-2-g9b3cdde",
+			"Rev": "9b3cdde74fbe9443d704467498a7dcb61a79de9b"
+		},
+		{
 			"ImportPath": "github.com/xdg/scram",
 			"Rev": "7eeb5667e42c09cb51bf7b7c28aea8c56767da90"
 		},
@@ -177,12 +187,12 @@
 			"Rev": "a5d413f7728c81fb97d96a2b722368945f651e78"
 		},
 		{
-			"ImportPath": "golang.org/x/net/context",
-			"Rev": "74de082e2cca95839e88aa0aeee5aadf6ce7710f"
-		},
-		{
 			"ImportPath": "golang.org/x/sync/semaphore",
 			"Rev": "e225da77a7e68af35c70ccbf71af2b83e6acac3c"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9eb1bfa1ce65ae8a6ff3114b0aaf9a41a6cf3560"
 		},
 		{
 			"ImportPath": "golang.org/x/text/transform",
