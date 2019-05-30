@@ -109,7 +109,10 @@ func marshallProposal(data string) (*Payment, error) {
 func save(p *Payment) (*Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+mongoreceiptsvc+":27017"))
+	uri := "mongodb://" + mongoreceiptsvc + "/?replicaSet=rs0"
+	log.Debug(uri)
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	//client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+mongoreceiptsvc+":27017"))
 	errping := client.Ping(ctx, nil)
 
 	if errping != nil {
