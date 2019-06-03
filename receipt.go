@@ -41,6 +41,7 @@ type Receipt struct {
 func main() {
 	log.Debug("server receipt starting...")
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", healthz)
 	mux.HandleFunc("/api/v1/receipts", receipt)
 	srv := http.Server{Addr: ":8000", Handler: mux}
 	ctx := context.Background()
@@ -58,6 +59,13 @@ func main() {
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("ListenAndServe(): %s", err)
 	}
+}
+
+func healthz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	data := (time.Now()).String()
+	log.Debug("health ok")
+	w.Write([]byte(data))
 }
 
 func receipt(w http.ResponseWriter, req *http.Request) {
