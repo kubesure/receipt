@@ -56,7 +56,8 @@ type errorresponse struct {
 func main() {
 	log.Debug("server receipt starting...")
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", healthz)
+	//mux.HandleFunc("/", healthz)
+	mux.HandleFunc("/isready", isReady)
 	mux.HandleFunc("/api/v1/receipts", receipt)
 	srv := http.Server{Addr: ":8000", Handler: mux}
 	ctx := context.Background()
@@ -74,6 +75,22 @@ func main() {
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("ListenAndServe(): %s", err)
 	}
+}
+
+func isReady(w http.ResponseWriter, req *http.Request) {
+	client, errping := conn()
+	defer client.Disconnect(context.Background())
+	if errping != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	coll := client.Database("receipts").Collection("receipt")
+	if coll == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
@@ -140,13 +157,8 @@ func marshallProposal(data string) (*Payment, *errorresponse) {
 }
 
 func save(p *Payment) (*Receipt, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	uri := "mongodb://" + mongoreceiptsvc + "/?replicaSet=rs0"
-	log.Debug(uri)
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	//client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+mongoreceiptsvc+":27017"))
-	errping := client.Ping(ctx, nil)
+
+	client, errping := conn()
 
 	if errping != nil {
 		return nil, errping
@@ -191,4 +203,18 @@ func nextcounter(c *mongo.Client) (int, error) {
 		return 0, err
 	}
 	return data.Value, nil
+}
+
+func conn() (*mongo.Client, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	uri := "mongodb://" + mongoreceiptsvc + "/?replicaSet=rs0"
+	log.Debug(uri)
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	//client, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+mongoreceiptsvc+":27017"))
+	errping := client.Ping(ctx, nil)
+	if errping != nil {
+		return nil, errping
+	}
+	return client, nil
 }
