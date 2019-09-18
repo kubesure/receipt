@@ -77,6 +77,7 @@ func main() {
 	}
 }
 
+//HTTP API called by k8s readiness probe.
 func isReady(w http.ResponseWriter, req *http.Request) {
 	client, errping := conn()
 	if errping != nil {
@@ -92,6 +93,7 @@ func isReady(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+//not utilized
 func healthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	data := (time.Now()).String()
@@ -99,6 +101,7 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(data))
 }
 
+//Create a receipt
 func receipt(w http.ResponseWriter, req *http.Request) {
 
 	p, err := validateReq(w, req)
@@ -155,6 +158,7 @@ func marshallProposal(data string) (*Payment, *errorresponse) {
 	return &p, nil
 }
 
+//Save the payment for the policy and return a receipt.
 func save(p *Payment) (*Receipt, error) {
 
 	client, errping := conn()
@@ -185,6 +189,7 @@ func save(p *Payment) (*Receipt, error) {
 	return &r, nil
 }
 
+//Generate new receipt number.
 func nextcounter(c *mongo.Client) (int, error) {
 	collection := c.Database("receipts").Collection("counter")
 	filter := bson.M{"_id": "receiptid"}
